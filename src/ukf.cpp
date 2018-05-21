@@ -2,6 +2,7 @@
 #include "Eigen/Dense"
 #include <iostream>
 #include "measurement_package.h"
+#include <fstream>
 
 using namespace std;
 using Eigen::MatrixXd;
@@ -13,6 +14,11 @@ using std::vector;
  * This is scaffolding, do not modify
  */
 UKF::UKF() {
+
+  // counter for metrics
+  lid_count = 0;
+  rad_count = 0;
+
   // if this is false, laser measurements will be ignored (except during init)
   use_laser_ = true;
 
@@ -138,9 +144,11 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
     if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
       UpdateLidar(meas_package);
+      lid_count ++;
     }
     else if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
       UpdateRadar(meas_package);
+      rad_count ++;
     }
   }
 }
@@ -334,9 +342,9 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   x_ = x_ + K * z_diff;
   P_ = P_ - K*S*K.transpose();
 
-  // print the output
-  cout << "x_ = " << x_ << endl;
-  cout << "P_ = " << P_ << endl;
+  // // print the output
+  // cout << "x_ = " << x_ << endl;
+  // cout << "P_ = " << P_ << endl;
 }
 
 /**
@@ -454,7 +462,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   // covariance update
   P_ = P_ - K*S*K.transpose();
 
-  // print the output
-  cout << "x_ = " << x_ << endl;
-  cout << "P_ = " << P_ << endl;
+  // // print the output
+  // cout << "x_ = " << x_ << endl;
+  // cout << "P_ = " << P_ << endl;
 }

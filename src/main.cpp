@@ -27,7 +27,7 @@ std::string hasData(std::string s) {
 }
 
 int main()
-{
+{ 
   uWS::Hub h;
 
   // Create a Kalman Filter instance
@@ -42,13 +42,11 @@ int main()
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
-
     if (length && length > 2 && data[0] == '4' && data[1] == '2')
     {
 
       auto s = hasData(std::string(data));
       if (s != "") {
-      	
         auto j = json::parse(s);
 
         std::string event = j[0].get<std::string>();
@@ -66,6 +64,9 @@ int main()
     	  string sensor_type;
     	  iss >> sensor_type;
 
+        ofstream csvlaser;
+        ofstream csvradar;
+
     	  if (sensor_type.compare("L") == 0) {
       	  		meas_package.sensor_type_ = MeasurementPackage::LASER;
           		meas_package.raw_measurements_ = VectorXd(2);
@@ -77,7 +78,6 @@ int main()
           		iss >> timestamp;
           		meas_package.timestamp_ = timestamp;
           } else if (sensor_type.compare("R") == 0) {
-
       	  		meas_package.sensor_type_ = MeasurementPackage::RADAR;
           		meas_package.raw_measurements_ = VectorXd(3);
           		float ro;
@@ -130,6 +130,14 @@ int main()
     	  VectorXd RMSE = tools.CalculateRMSE(estimations, ground_truth);
         cout << "RMSE =" <<RMSE <<endl;
 
+        if(meas_package.sensor_type_ == MeasurementPackage::LASER){
+          csvlaser.open ("NISlaser.csv", ios::out | ios::ate | ios::app);
+          csvlaser << ukf.lid_count << "," << ukf.NIS_laser_ << endl;
+        } else if(meas_package.sensor_type_ == MeasurementPackage::RADAR){
+          csvradar.open ("NISradar.csv", ios::out | ios::ate | ios::app);
+          csvradar << ukf.rad_count << "," << ukf.NIS_radar_ << endl;
+        }
+
           json msgJson;
           msgJson["estimate_x"] = p_x;
           msgJson["estimate_y"] = p_y;
@@ -140,15 +148,15 @@ int main()
           auto msg = "42[\"estimate_marker\"," + msgJson.dump() + "]";
           // std::cout << msg << std::endl;
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
-	  
+        csvlaser.close();
+        csvradar.close();
         }
       } else {
         
         std::string msg = "42[\"manual\",{}]";
         ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
       }
-    }
-
+    }  
   });
 
   // We don't need this since we're not using HTTP but if it's removed the program
